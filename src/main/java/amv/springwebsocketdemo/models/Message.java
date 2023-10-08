@@ -1,4 +1,4 @@
 package amv.springwebsocketdemo.models;
 
-public record Message(String name, String content) {
+public record Message(String room, String user, String content) {
 }

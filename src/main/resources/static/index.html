@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>Websockets al fin</h1>
+    <h5 id="status">Desconectado</h5>
+    <div>
+        <b>Mensajes</b>
+        <div id="chat"></div>
+    </div>
+
+    <div>
+        <label>
+            <p>Host</p>
+            <input type="text" id="host" value="localhost">
+        </label>
+        <label>
+            <p>Sala</p>
+            <input type="text" id="room">
+        </label>
+        <label>
+            <p>Usuario</p>
+            <input type="text" id="user">
+        </label>
+        <label>
+            <p>Mensaje</p>
+            <textarea id="content"></textarea>
+        </label>
+        <button onclick="sendMessage()">Enviar</button>
+        <hr>
+        <button onclick="connect()">Conectar</button>
+        <button onclick="disconnect()">Desconectar</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <script type="application/javascript">
+        const setConnected = () => document.querySelector("#status").innerText = "Conectado"
+        const setDisconnected = () => document.querySelector("#status").innerText = "Desconectado"
+        const addMessage = (message) => {
+            console.log(message)
+            document.querySelector("#chat").innerHTML += `<p>${message}</p>`
+        }
+        const sendMessage = () => {
+            const room = document.querySelector("#room").value
+            const user = document.querySelector("#user").value
+            const content = document.querySelector("#content").value
+            client.publish({
+                destination: "/app/send",
+                body: JSON.stringify({room, user, content})
+            });
+            document.querySelector("#content").value = ""
+        }
+        let client = undefined
+        const connect = () => {
+            if (client) disconnect()
+            const host = document.querySelector("#host").value
+            const room = document.querySelector("#room").value
+            client = new StompJs.Client({
+                brokerURL: `ws://${host}:8080/websocket`
+            })
+
+            client.onConnect = (frame) => {
+                setConnected()
+                console.log('Connected: ' + frame);
+                client.subscribe(`/topic/messages/${room}`, (message) => {
+                    addMessage(message.body);
+                });
+            };
+
+            client.onWebSocketError = (error) => {
+                alert(`Error with websocket ${error}`)
+            };
+
+            client.onStompError = (frame) => {
+                console.error('Broker reported error: ' + frame.headers['message']);
+                console.error('Additional details: ' + frame.body);
+            };
+            client.activate()
+        }
+        const disconnect = () => {
+            if (!client) return
+            client.deactivate()
+            setDisconnected()
+        }
+
+    </script>
+
+</body>
+</html>
