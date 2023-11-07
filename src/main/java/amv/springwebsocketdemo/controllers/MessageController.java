@@ -8,7 +8,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 @Controller
@@ -23,6 +25,12 @@ public class MessageController {
         log.info(sessionId);
         messageService.processingAndSend(message);
         return null;
+    }
+
+    @EventListener
+    public void onConnectEvent(SessionConnectEvent event) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        log.info("Client with session id {} connected", accessor.getSessionId());
     }
 
     @EventListener
